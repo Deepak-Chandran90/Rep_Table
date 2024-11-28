@@ -1,0 +1,104 @@
+USE [eddiextraction]
+GO
+/****** Object:  StoredProcedure [dbo].[Rep_table]    Script Date: 11/28/2024 7:22:51 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+ALTER PROCEDURE [dbo].[Rep_table] @Table nvarchar(255)
+AS
+BEGIN
+SET NOCOUNT ON;
+declare @sql nvarchar(max)
+--Select distinct d_status from eddi_data..venue_rep_new
+
+
+set @sql='drop table if exists Set_Rep_demo'
+exec sp_executesql @sql
+
+set @sql='select distinct temp_id,cons,location,locationaddress,locationcity,locationstate,
+locationcountry,locationzip,locationlatitude,locationlongitude,cid,venueid,venue,address,city,state,
+zip,country,latitude,longitude,capacity,vcategory into Set_Rep_demo from '+@table+'_rep where isnull (cid,'''')!=''''' --67292
+exec sp_executesql @sql
+
+--select distinct Temp_id,cid,venueid,venue,address,city,state,zip,country,latitude,longitude,capacity,vcategory from Eddi_Refresh_Set119 where isnull (Venueid,'')!=''
+
+set @sql='drop table if exists Set_Rep_demo2'
+exec sp_executesql @sql
+
+set @sql='select distinct Temp_id,cid,venueid,venue,address,city,state,zip,country,latitude,longitude,capacity,vcategory into Set_Rep_demo2
+from '+@table+'_start where isnull (Venueid,'''')!=''''' --18658
+exec sp_executesql @sql
+
+set @sql='update Set_Rep_demo set venueid ='''''
+exec sp_executesql @sql
+set @sql='update Set_Rep_demo set venue ='''''
+exec sp_executesql @sql
+set @sql='update Set_Rep_demo set address ='''''
+exec sp_executesql @sql
+set @sql='update Set_Rep_demo set city ='''''
+exec sp_executesql @sql
+set @sql='update Set_Rep_demo set state ='''''
+exec sp_executesql @sql
+set @sql='update Set_Rep_demo set zip ='''''
+exec sp_executesql @sql
+set @sql='update Set_Rep_demo set country ='''''
+exec sp_executesql @sql
+set @sql='update Set_Rep_demo set latitude ='''''
+exec sp_executesql @sql
+set @sql='update Set_Rep_demo set longitude ='''''
+exec sp_executesql @sql
+set @sql='update Set_Rep_demo set capacity ='''''
+exec sp_executesql @sql
+set @sql='update Set_Rep_demo set vcategory ='''''
+exec sp_executesql @sql
+
+set @sql='update a set
+a.venueid=b.venueid
+from Set_Rep_demo a join
+Set_Rep_demo2 b on a.temp_id=b.temp_id'
+exec sp_executesql @sql
+
+--select count(*) from Set_Rep_demo where isnull(venueid,'')='' --43659,48327,47856
+
+set @sql='Delete Set_Rep_demo where isnull(venueid,'''')='''''
+exec sp_executesql @sql
+
+set @sql='update a set
+a.Venue=b.venue,
+a.Address=b.Address,
+a.City=b.City,
+a.State=b.State,
+a.Country=b.Country,
+a.Zip=b.Zip,
+a.Latitude=b.Latitude,
+a.Longitude=b.Longitude,
+a.capacity=b.capacity,
+a.vcategory=b.vcategory
+from Set_Rep_demo a
+join Set_Rep_demo2 b on a.Venueid=b.venueid'
+exec sp_executesql @sql
+
+--select count(*) from Set_Rep_demo --19436
+
+set @sql='insert into Eddi_data..venue_rep_new (temp_id,cons,location,locationaddress,locationcity,locationstate,
+locationcountry,locationzip,locationlatitude,locationlongitude,cid,venueid,
+venue,address,city,state,zip,country,latitude,longitude,vcapacity,vcategory)
+select temp_id,cons,location,locationaddress,locationcity,locationstate,
+locationcountry,locationzip,locationlatitude,locationlongitude,cid,venueid,
+venue,address,city,state,zip,country,latitude,longitude,capacity,vcategory from Set_Rep_demo'
+exec sp_executesql @sql
+
+--select distinct d_status from Eddi_data..venue_rep_new
+
+set @sql='update Eddi_data..venue_rep_new set d_status=@table where isnull(d_status,'''')='''''
+EXEC sp_executesql @sql, N'@table NVARCHAR(255)', @table;
+
+
+
+END
